@@ -5,6 +5,9 @@ import * as Permissions from "expo-permissions";
 import {BarCodeScanner} from "expo-barcode-scanner";
 import { TextInput } from 'react-native-gesture-handler';
 
+import * as firebase from "firebase";
+import db  from "../config";
+
 
 
 export default  class  TransactionScreen extends React.Component{
@@ -17,7 +20,8 @@ export default  class  TransactionScreen extends React.Component{
         scannedData:"",
         buttonState:"normal",
         scannedBookId:"",
-        scannedStudentId:""
+        scannedStudentId:"",
+        transactionMessage:""
       }
     }
     getCameraPermissions=async(id)=>{
@@ -37,6 +41,61 @@ export default  class  TransactionScreen extends React.Component{
 
     });
 
+    }
+
+    handletransaction=async()=>{
+      var transactionMessage=null;
+      db.collection("books").doc(this.state.scannedBookId).get().then((doc)=>{
+        var book=doc.data();
+        if(book.bookAvailability){
+          this.initiateBookIssue();
+          transactionMessage="Issue";
+        }else {
+          this.initiateBookReturn();
+          transactionMessage="return";
+        }
+      })
+      this.setState({
+        transactionMessage:transactionMessage,
+
+      });
+    }
+    initiateBookIssue=async()=>{
+      db.collection("transaction").add({
+        studentId:this.state.scannedStudentId,
+        bookId:this.state.scannedBookId,
+        date:firebase.firestore.Timestamp.now().toDate(),
+        transactiontype:"issue",
+      });
+      db.collection("books").doc(this.state.scannedBookId).update({
+        bookAvailability:false
+      })
+      db.collection("students").doc(this.state.scannedStudentId).update({
+        numberOfBookIssued:firebase.firestore.FieldValue.increment(1)
+      })
+      this.setState({
+        scannedBookId:"",
+        scannedStudentId:""
+      })
+    }
+
+    initiateBookReturn=async()=>{
+      db.collection("transaction").add({
+        studentId:this.state.scannedStudentId,
+        bookId:this.state.scannedBookId,
+        date:firebase.firestore.Timestamp.now().toDate(),
+        transactiontype:"return",
+      });
+      db.collection("books").doc(this.state.scannedBookId).update({
+        bookAvailability:true
+      })
+      db.collection("students").doc(this.state.scannedStudentId).update({
+        numberOfBookIssued:firebase.firestore.FieldValue.increment(-1)
+      })
+      this.setState({
+        scannedBookId:"",
+        scannedStudentId:""
+      })
     }
 
   render(){
@@ -82,6 +141,7 @@ else if(buttonState==="normal"){
           <Text style={styles.buttonText}> Scan</Text>
 
         </TouchableOpacity>
+        
       </View>
 
       <View style={styles.inputView}>
@@ -102,6 +162,16 @@ else if(buttonState==="normal"){
 
         </TouchableOpacity>
       </View>
+
+      <TouchableOpacity style={styles.button}
+            onPress={async()=>{
+              this.handletransaction();
+            }}
+        >
+
+          <Text style={styles.buttonText}> Submit</Text>
+
+        </TouchableOpacity>
 
       </View>
     )

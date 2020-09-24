@@ -1,9 +1,8 @@
 import * as React from 'react';
-import {View,Text,TouchableOpacity,StyleSheet,Image} from 'react-native';
+import {View,Text,TouchableOpacity,StyleSheet,Image,TextInput,KeyboardAvoidingView,ToastAndroid} from 'react-native';
 
 import * as Permissions from "expo-permissions";
 import {BarCodeScanner} from "expo-barcode-scanner";
-import { TextInput } from 'react-native-gesture-handler';
 
 import * as firebase from "firebase";
 import db  from "../config";
@@ -49,10 +48,12 @@ export default  class  TransactionScreen extends React.Component{
         var book=doc.data();
         if(book.bookAvailability){
           this.initiateBookIssue();
-          transactionMessage="Issue";
+          transactionMessage="Book Issued";
+          ToastAndroid.show(transactionMessage,ToastAndroid.SHORT)
         }else {
           this.initiateBookReturn();
           transactionMessage="return";
+          ToastAndroid.show(transactionMessage,ToastAndroid.SHORT)
         }
       })
       this.setState({
@@ -114,7 +115,8 @@ export default  class  TransactionScreen extends React.Component{
 else if(buttonState==="normal"){
  
     return(
-      <View style={{justifyContent:'center',alignItems:'center'}}>
+      <KeyboardAvoidingView style={{justifyContent:'center',alignItems:'center'}} behavior="padding" enabled>
+        
         <View>
           <Image 
           source={require("../assets/booklogo.jpg")}
@@ -125,13 +127,13 @@ else if(buttonState==="normal"){
         </View>
      <View style={styles.inputView}>
       <TextInput
+      onChangeText={text=>{this.setState({scannedBookId:text})}}
       style={styles.inputBox}
       placeholder="BookId"
       value={this.state.scannedBookId}
 
       >
       </TextInput>
-        
         <TouchableOpacity style={styles.button}
             onPress={()=>{
               this.getCameraPermissions("BookId");
@@ -146,6 +148,8 @@ else if(buttonState==="normal"){
 
       <View style={styles.inputView}>
       <TextInput
+        onChangeText={text=>{this.setState({scannedStudentId:text})}}
+
       style={styles.inputBox}
       placeholder="StudentId"
       value={this.state.scannedStudentId}
@@ -173,7 +177,7 @@ else if(buttonState==="normal"){
 
         </TouchableOpacity>
 
-      </View>
+      </KeyboardAvoidingView>
     )
   }
   }

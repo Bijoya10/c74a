@@ -37,7 +37,6 @@ export default  class  TransactionScreen extends React.Component{
       this.setState({scanned:true,
       scannedData:data,
       buttonState:'normal'  
-
     });
 
     }
